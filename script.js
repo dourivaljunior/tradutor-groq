@@ -56,4 +56,46 @@ stopBtn.addEventListener("click", () => {
   statusDiv.innerText = "⏹ Tradução parada.";
 
 });
+// =============================================
+// VISUALIZADOR DE ÁUDIO
+// =============================================
+
+const bars = document.querySelectorAll(".bar");
+const micIndicator = document.getElementById("micIndicator");
+
+// =============================================
+// ANIMAÇÃO DO VU METER
+// =============================================
+
+function animateVisualizer() {
+
+  bars.forEach(bar => {
+
+    const randomHeight = Math.floor(Math.random() * 100) + 15;
+
+    bar.style.height = `${randomHeight}px`;
+
+  });
+
+}
+
+// =============================================
+// LOOP VISUAL
+// =============================================
+
+setInterval(() => {
+
+  if (listening && !speaking) {
+
+    animateVisualizer();
+
+  } else {
+
+    bars.forEach(bar => {
+      bar.style.height = "20px";
+    });
+
+  }
+
+}, 120);
 };
