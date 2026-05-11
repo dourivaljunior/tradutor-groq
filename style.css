@@ -51,4 +51,64 @@ body {
   font-size: 2.7rem;
   margin-bottom: 10px;
 }
+.header {
+.header p {
+  opacity: 0.8;
+}
+
+.status-box {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  background: rgba(255,255,255,0.06);
+  padding: 16px;
+  border-radius: 16px;
+  margin-bottom: 25px;
+}
+
+.mic-indicator {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #ef4444;
+  box-shadow: 0 0 10px #ef4444;
+  transition: 0.3s;
+}
+
+.mic-active {
+  background: #22c55e;
+  box-shadow: 0 0 20px #22c55e;
+}
+
+.visualizer-container {
+  background: rgba(255,255,255,0.05);
+  border-radius: 20px;
+  padding: 25px;
+  margin-bottom: 25px;
+}
+
+.visualizer {
+  height: 120px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 6px;
+}
+
+.bar {
+  width: 14px;
+  height: 20px;
+  border-radius: 10px;
+  background: linear-gradient(to top, #22c55e, #eab308, #ef4444);
+  transition: 0.08s linear;
+}
+
+.start-btn {
+  background: linear-gradient(135deg, #2563eb, #3b82f6);
+}
+
+.stop-btn {
+  background: linear-gradient(135deg, #374151, #4b5563);
+}
 }
