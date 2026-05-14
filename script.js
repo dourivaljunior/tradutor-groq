@@ -1,5 +1,5 @@
 // =====================================================
-// CHAVE GROQ 
+// CHAVE API GROQ
 // =====================================================
 
 const GROQ_API_KEY =
@@ -41,7 +41,7 @@ let recognition;
 
 let listening = false;
 
-let speaking = false;
+let processing = false;
 
 // =====================================================
 // SPEECH RECOGNITION
@@ -54,7 +54,7 @@ const SpeechRecognition =
 if (!SpeechRecognition) {
 
   alert(
-    "Navegador não suporta reconhecimento de voz."
+    "Seu navegador não suporta reconhecimento de voz."
   );
 
 }
@@ -62,13 +62,11 @@ if (!SpeechRecognition) {
 recognition =
   new SpeechRecognition();
 
-// MUITO IMPORTANTE
-
 recognition.continuous = true;
 
 recognition.interimResults = false;
 
-// DETECÇÃO MISTA PT + EN
+// MELHOR PARA PT + EN
 
 recognition.lang = "pt-BR";
 
@@ -101,6 +99,8 @@ stopBtn.addEventListener("click", () => {
 
   listening = false;
 
+  processing = false;
+
   recognition.stop();
 
   speechSynthesis.cancel();
@@ -117,20 +117,28 @@ stopBtn.addEventListener("click", () => {
 });
 
 // =====================================================
-// DETECTAR FALA
+// RECEBER FALA
 // =====================================================
 
 recognition.onresult =
   async (event) => {
 
-    if (speaking) return;
+    if (processing) return;
+
+    processing = true;
 
     const transcript =
       event.results[
         event.results.length - 1
       ][0].transcript.trim();
 
-    if (transcript.length < 2) return;
+    if (transcript.length < 2) {
+
+      processing = false;
+
+      return;
+
+    }
 
     originalText.innerText =
       transcript;
@@ -140,18 +148,18 @@ recognition.onresult =
 
     try {
 
-      const translated =
+      const result =
         await translateText(transcript);
 
       translatedText.innerText =
-        translated.text;
+        result.translation;
 
       statusText.innerText =
-        translated.direction;
+        result.direction;
 
-      speakText(
-        translated.text,
-        translated.voice
+      speak(
+        result.translation,
+        result.voice
       );
 
     } catch (error) {
@@ -161,12 +169,14 @@ recognition.onresult =
       statusText.innerText =
         "❌ Erro tradução";
 
+      processing = false;
+
     }
 
 };
 
 // =====================================================
-// GROQ TRADUÇÃO
+// TRADUÇÃO
 // =====================================================
 
 async function translateText(text) {
@@ -200,25 +210,15 @@ async function translateText(text) {
               role: "system",
 
               content: `
-Você é um tradutor automático PT ↔ EN.
+Você é um tradutor.
 
-REGRAS:
-- Detecte apenas português ou inglês.
-- Se o usuário falar português:
+Se o texto estiver em português:
 traduzir para inglês.
-- Se falar inglês:
+
+Se estiver em inglês:
 traduzir para português.
-- NÃO explique.
-- NÃO converse.
-- RESPONDA SOMENTE ASSIM:
 
-LANG: PT
-TEXT: Hello, how are you?
-
-OU
-
-LANG: EN
-TEXT: Olá, tudo bem?
+Responda SOMENTE a tradução.
 `
 
             },
@@ -246,65 +246,41 @@ TEXT: Olá, tudo bem?
 
   console.log(data);
 
-  const content =
+  const translation =
     data.choices[0]
-      .message.content;
+      .message.content.trim();
 
-  let detected =
-    "EN";
+  // DETECÇÃO SIMPLES
 
-  let translated =
-    content;
-
-  if (
-    content.includes("LANG: PT")
-  ) {
-
-    detected =
-      "PT → EN";
-
-  } else {
-
-    detected =
-      "EN → PT";
-
-  }
-
-  if (
-    content.includes("TEXT:")
-  ) {
-
-    translated =
-      content
-      .split("TEXT:")[1]
-      .trim();
-
-  }
-
-  const voice =
-    detected === "PT → EN"
-      ? "en-US"
-      : "pt-BR";
+  const isPortuguese =
+    /[ãõçáéíóú]/i.test(text) ||
+    text.includes("você") ||
+    text.includes("olá") ||
+    text.includes("qual");
 
   return {
 
-    direction: detected,
-    text: translated,
-    voice
+    translation,
+
+    direction:
+      isPortuguese
+        ? "PT → EN"
+        : "EN → PT",
+
+    voice:
+      isPortuguese
+        ? "en-US"
+        : "pt-BR"
 
   };
 
 }
 
 // =====================================================
-// FALAR TEXTO
+// FALAR ÁUDIO
 // =====================================================
 
-function speakText(text, lang) {
-
-  speaking = true;
-
-  recognition.stop();
+function speak(text, lang) {
 
   speechSynthesis.cancel();
 
@@ -321,22 +297,19 @@ function speakText(text, lang) {
 
   utterance.volume = 1;
 
+  utterance.onstart = () => {
+
+    statusText.innerText =
+      "🔊 Reproduzindo áudio...";
+
+  };
+
   utterance.onend = () => {
 
-    speaking = false;
+    processing = false;
 
-    if (listening) {
-
-      setTimeout(() => {
-
-        recognition.start();
-
-        statusText.innerText =
-          "🎤 Ouvindo conversa...";
-
-      }, 600);
-
-    }
+    statusText.innerText =
+      "🎤 Ouvindo conversa...";
 
   };
 
@@ -354,13 +327,13 @@ function animateBars() {
 
   bars.forEach(bar => {
 
-    const h =
+    const height =
       Math.floor(
         Math.random() * 150
       ) + 20;
 
     bar.style.height =
-      `${h}px`;
+      `${height}px`;
 
   });
 
@@ -385,7 +358,7 @@ setInterval(() => {
 
   if (
     listening &&
-    !speaking
+    !processing
   ) {
 
     animateBars();
@@ -399,21 +372,21 @@ setInterval(() => {
 }, 120);
 
 // =====================================================
-// REINICIAR AUTOMÁTICO
+// AUTO RESTART
 // =====================================================
 
 recognition.onend = () => {
 
   if (
     listening &&
-    !speaking
+    !processing
   ) {
 
     setTimeout(() => {
 
       recognition.start();
 
-    }, 400);
+    }, 300);
 
   }
 
@@ -430,5 +403,7 @@ recognition.onerror =
 
     statusText.innerText =
       `❌ ${event.error}`;
+
+    processing = false;
 
 };
