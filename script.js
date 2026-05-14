@@ -1,5 +1,5 @@
 // =====================================================
-// CHAVE API GROQ
+// CHAVE GROQ
 // =====================================================
 
 const GROQ_API_KEY =
@@ -51,15 +51,29 @@ const SpeechRecognition =
   window.SpeechRecognition ||
   window.webkitSpeechRecognition;
 
+if (!SpeechRecognition) {
+
+  alert(
+    "Navegador não suporta reconhecimento de voz."
+  );
+
+}
+
 recognition =
   new SpeechRecognition();
+
+// MUITO IMPORTANTE
 
 recognition.continuous = true;
 
 recognition.interimResults = false;
 
+// DETECÇÃO MISTA PT + EN
+
+recognition.lang = "pt-BR";
+
 // =====================================================
-// INICIAR CONVERSA
+// INICIAR
 // =====================================================
 
 startBtn.addEventListener("click", () => {
@@ -80,7 +94,7 @@ startBtn.addEventListener("click", () => {
 });
 
 // =====================================================
-// FINALIZAR CONVERSA
+// FINALIZAR
 // =====================================================
 
 stopBtn.addEventListener("click", () => {
@@ -126,18 +140,18 @@ recognition.onresult =
 
     try {
 
-      const translation =
+      const translated =
         await translateText(transcript);
 
       translatedText.innerText =
-        translation.text;
+        translated.text;
 
       statusText.innerText =
-        `✅ ${translation.detected}`;
+        translated.direction;
 
       speakText(
-        translation.text,
-        translation.lang
+        translated.text,
+        translated.voice
       );
 
     } catch (error) {
@@ -145,14 +159,14 @@ recognition.onresult =
       console.error(error);
 
       statusText.innerText =
-        "❌ Erro na tradução";
+        "❌ Erro tradução";
 
     }
 
 };
 
 // =====================================================
-// TRADUÇÃO GROQ
+// GROQ TRADUÇÃO
 // =====================================================
 
 async function translateText(text) {
@@ -186,25 +200,25 @@ async function translateText(text) {
               role: "system",
 
               content: `
-Você é um tradutor automático.
+Você é um tradutor automático PT ↔ EN.
 
 REGRAS:
-- Detecte SOMENTE português ou inglês.
-- Se estiver em português:
+- Detecte apenas português ou inglês.
+- Se o usuário falar português:
 traduzir para inglês.
-- Se estiver em inglês:
+- Se falar inglês:
 traduzir para português.
 - NÃO explique.
+- NÃO converse.
+- RESPONDA SOMENTE ASSIM:
 
-RESPONDA EXATAMENTE:
-
-LANGUAGE: PT
-TRANSLATION: Hello
+LANG: PT
+TEXT: Hello, how are you?
 
 OU
 
-LANGUAGE: EN
-TRANSLATION: Olá
+LANG: EN
+TEXT: Olá, tudo bem?
 `
 
             },
@@ -230,51 +244,53 @@ TRANSLATION: Olá
   const data =
     await response.json();
 
+  console.log(data);
+
   const content =
     data.choices[0]
       .message.content;
 
-  let detected = "EN";
+  let detected =
+    "EN";
 
-  let translated = content;
+  let translated =
+    content;
 
   if (
-    content.includes(
-      "LANGUAGE: PT"
-    )
+    content.includes("LANG: PT")
   ) {
 
-    detected = "PT → EN";
+    detected =
+      "PT → EN";
 
   } else {
 
-    detected = "EN → PT";
+    detected =
+      "EN → PT";
 
   }
 
   if (
-    content.includes(
-      "TRANSLATION:"
-    )
+    content.includes("TEXT:")
   ) {
 
     translated =
       content
-      .split("TRANSLATION:")[1]
+      .split("TEXT:")[1]
       .trim();
 
   }
 
-  let lang =
+  const voice =
     detected === "PT → EN"
       ? "en-US"
       : "pt-BR";
 
   return {
 
-    detected,
+    direction: detected,
     text: translated,
-    lang
+    voice
 
   };
 
@@ -290,6 +306,8 @@ function speakText(text, lang) {
 
   recognition.stop();
 
+  speechSynthesis.cancel();
+
   const utterance =
     new SpeechSynthesisUtterance(
       text
@@ -300,6 +318,8 @@ function speakText(text, lang) {
   utterance.rate = 1;
 
   utterance.pitch = 1;
+
+  utterance.volume = 1;
 
   utterance.onend = () => {
 
@@ -314,7 +334,7 @@ function speakText(text, lang) {
         statusText.innerText =
           "🎤 Ouvindo conversa...";
 
-      }, 400);
+      }, 600);
 
     }
 
@@ -334,13 +354,13 @@ function animateBars() {
 
   bars.forEach(bar => {
 
-    const height =
+    const h =
       Math.floor(
-        Math.random() * 160
+        Math.random() * 150
       ) + 20;
 
     bar.style.height =
-      `${height}px`;
+      `${h}px`;
 
   });
 
@@ -379,7 +399,7 @@ setInterval(() => {
 }, 120);
 
 // =====================================================
-// REINICIAR MICROFONE
+// REINICIAR AUTOMÁTICO
 // =====================================================
 
 recognition.onend = () => {
@@ -393,7 +413,7 @@ recognition.onend = () => {
 
       recognition.start();
 
-    }, 300);
+    }, 400);
 
   }
 
@@ -409,6 +429,6 @@ recognition.onerror =
     console.error(event.error);
 
     statusText.innerText =
-      "❌ Erro reconhecimento";
+      `❌ ${event.error}`;
 
 };
