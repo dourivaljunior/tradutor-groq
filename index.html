@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="pt-BR">   
+<html lang="pt-BR">
 
 <head>
 
@@ -20,141 +20,97 @@
 
 <body>
 
-  <!-- FUNDO -->
+  <div class="container">
 
-  <div class="bg-glow"></div>
-
-  <!-- APP -->
-
-  <div class="app">
-
-    <!-- TOPO -->
-
-    <header class="header">
-
-      <div class="logo">
-        🌎
-      </div>
+    <div class="card">
 
       <h1>
-        Tradutor IA
+        🌎 Tradutor IA
       </h1>
 
-      <p>
-        Conversa Automática Português ↔ English
+      <p class="subtitle">
+        Português ↔ English
       </p>
 
-    </header>
-
-    <!-- STATUS -->
-
-    <section class="status-card">
-
-      <div class="status-left">
-
-        <div
-          class="mic-led"
-          id="micLed"
-        ></div>
-
-        <span id="statusText">
-          Sistema parado
-        </span>
-
-      </div>
+      <!-- STATUS -->
 
       <div
-        class="live-badge"
-        id="liveBadge"
+        class="status"
+        id="status"
       >
-        LIVE
+        Sistema parado
       </div>
 
-    </section>
+      <!-- BOTÕES -->
 
-    <!-- VISUALIZER -->
+      <div class="buttons">
 
-    <section class="visualizer-card">
+        <button
+          id="startBtn"
+          class="start-btn"
+        >
+          ▶ Iniciar Conversa
+        </button>
 
-      <div
-        class="visualizer"
-        id="visualizer"
-      >
-
-        <div class="bar"></div>
-        <div class="bar"></div>
-        <div class="bar"></div>
-        <div class="bar"></div>
-        <div class="bar"></div>
-        <div class="bar"></div>
-        <div class="bar"></div>
-        <div class="bar"></div>
-        <div class="bar"></div>
-        <div class="bar"></div>
-        <div class="bar"></div>
-        <div class="bar"></div>
-        <div class="bar"></div>
-        <div class="bar"></div>
-        <div class="bar"></div>
-        <div class="bar"></div>
+        <button
+          id="stopBtn"
+          class="stop-btn"
+        >
+          ⏹ Terminar Conversa
+        </button>
 
       </div>
 
-    </section>
+      <!-- VU METER -->
 
-    <!-- BOTÕES -->
+      <div class="vu-container">
 
-    <section class="buttons">
+        <div class="vu-bar"></div>
+        <div class="vu-bar"></div>
+        <div class="vu-bar"></div>
+        <div class="vu-bar"></div>
+        <div class="vu-bar"></div>
+        <div class="vu-bar"></div>
+        <div class="vu-bar"></div>
+        <div class="vu-bar"></div>
+        <div class="vu-bar"></div>
+        <div class="vu-bar"></div>
 
-      <button
-        id="startBtn"
-        class="start-btn"
-      >
-        ▶ Iniciar Conversa
-      </button>
-
-      <button
-        id="stopBtn"
-        class="stop-btn"
-      >
-        ⏹ Finalizar Conversa
-      </button>
-
-    </section>
-
-    <!-- TEXTO ORIGINAL -->
-
-    <section class="card">
-
-      <div class="card-title">
-        📝 Voz Detectada
       </div>
 
-      <div
-        class="card-content"
-        id="originalText"
-      >
-        Aguardando conversa...
+      <!-- ORIGINAL -->
+
+      <div class="box">
+
+        <h2>
+          📝 Voz Detectada
+        </h2>
+
+        <div id="originalText">
+
+          Aguardando conversa...
+
+        </div>
+
       </div>
 
-    </section>
+      <!-- TRADUÇÃO -->
 
-    <!-- TEXTO TRADUZIDO -->
+      <div class="box">
 
-    <section class="card">
+        <h2>
+          🌐 Tradução
+        </h2>
 
-      <div class="card-title">
-        🌐 Tradução
+        <div id="translatedText">
+
+          Tradução aparecerá aqui...
+
+        </div>
+
       </div>
 
-      <div
-        class="card-content"
-        id="translatedText"
-      >
-        Tradução aparecerá aqui...
-      </div>
-
-    </section>
+    </div>
 
   </div>
 
