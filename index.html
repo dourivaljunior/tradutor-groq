@@ -36,8 +36,8 @@
             border-left: 8px solid transparent; transition: all 0.3s;
         }
 
-        .box-pt { border-color: var(--accent-pt); }
-        .box-en { border-color: var(--accent-en); }
+        .box-pt { border-color: #34c759; }
+        .box-en { border-color: #ff9500; }
 
         .lang-label { font-size: 12px; font-weight: 800; text-transform: uppercase; margin-bottom: 10px; opacity: 0.6; }
         .content { font-size: 24px; font-weight: 600; line-height: 1.2; }
@@ -47,7 +47,7 @@
         
         #micBtn {
             width: 100px; height: 100px; border-radius: 50%; border: none;
-            background: var(--primary); color: white; cursor: pointer;
+            background: #007aff; color: white; cursor: pointer;
             display: flex; align-items: center; justify-content: center;
             box-shadow: 0 0 30px rgba(0, 122, 255, 0.4); transition: all 0.3s;
         }
@@ -68,6 +68,18 @@
         .status { position: absolute; top: 20px; right: 20px; font-size: 10px; display: flex; align-items: center; gap: 5px; }
         .dot { width: 6px; height: 6px; border-radius: 50%; background: #444; }
         .dot.active { background: #34c759; box-shadow: 0 0 5px #34c759; }
+        
+        .error-message {
+            background: rgba(255, 59, 48, 0.2);
+            border: 1px solid #ff3b30;
+            border-radius: 12px;
+            padding: 8px 12px;
+            margin: 10px auto;
+            max-width: 90%;
+            text-align: center;
+            font-size: 12px;
+            color: #ff6b6b;
+        }
     </style>
 </head>
 <body>
@@ -76,7 +88,7 @@
         <div style="font-weight: 800; letter-spacing: 1px;">TRADUTOR DE PAINEL</div>
         <div class="status">
             <div id="status-dot" class="dot"></div>
-            <span id="status-text">VERIFICANDO...</span>
+            <span id="status-text">CARREGANDO...</span>
         </div>
     </header>
 
@@ -106,54 +118,98 @@
             <div class="hint" id="hint-text">Toque para ouvir</div>
         </div>
     </div>
+    
+    <div id="error-container"></div>
 
+    <!-- CARREGA A CHAVE DO ARQUIVO EXTERNO (NÃO COMMITADO) -->
+    <script src="config.js"></script>
+    
     <script>
-        // ==================================================
-        // COLE SUA CHAVE API GROQ AQUI (pode ser a chave de exemplo para testes)
-        // Para usar de verdade: https://console.groq.com
-        // ==================================================
-        const GROQ_API_KEY = "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";
+        let GROQ_API_KEY = null;
+        let micBtn, hintText, statusDot, statusText;
+        let textPt, textEn, origPt, origEn;
+        let recognition;
 
-        const micBtn = document.getElementById('micBtn');
-        const hintText = document.getElementById('hint-text');
-        const statusDot = document.getElementById('status-dot');
-        const statusText = document.getElementById('status-text');
+        // Aguarda o config.js carregar
+        window.addEventListener('DOMContentLoaded', () => {
+            micBtn = document.getElementById('micBtn');
+            hintText = document.getElementById('hint-text');
+            statusDot = document.getElementById('status-dot');
+            statusText = document.getElementById('status-text');
+            textPt = document.getElementById('text-pt');
+            textEn = document.getElementById('text-en');
+            origPt = document.getElementById('orig-pt');
+            origEn = document.getElementById('orig-en');
+            
+            // Verifica se a chave foi carregada do config.js
+            if (typeof window.GROQ_API_KEY !== 'undefined' && window.GROQ_API_KEY && window.GROQ_API_KEY !== "") {
+                GROQ_API_KEY = window.GROQ_API_KEY;
+                statusDot.classList.add('active');
+                statusText.innerText = "GROQ ONLINE";
+                initSpeechRecognition();
+            } else {
+                statusDot.classList.remove('active');
+                statusText.innerText = "⚠️ API KEY NÃO CONFIGURADA";
+                showError("❌ Arquivo config.js não encontrado ou chave não definida. Crie o arquivo config.js com: const GROQ_API_KEY = 'sua_chave';");
+            }
+        });
 
-        const textPt = document.getElementById('text-pt');
-        const textEn = document.getElementById('text-en');
-        const origPt = document.getElementById('orig-pt');
-        const origEn = document.getElementById('orig-en');
-
-        // ==================================================
-        // CORREÇÃO FINAL: Só considera inválido se a chave estiver VAZIA
-        // Não bloqueia chave de exemplo - deixa tentar
-        // ==================================================
-        const isKeyMissing = !GROQ_API_KEY || GROQ_API_KEY === "";
-
-        if (!isKeyMissing) {
-            statusDot.classList.add('active');
-            statusText.innerText = "GROQ ONLINE";
-        } else {
-            statusDot.classList.remove('active');
-            statusText.innerText = "⚠️ API KEY VAZIA";
+        function showError(msg) {
+            const container = document.getElementById('error-container');
+            container.innerHTML = `<div class="error-message">⚠️ ${msg}</div>`;
+            setTimeout(() => {
+                if (container.firstChild) container.innerHTML = '';
+            }, 5000);
         }
 
-        // Verifica suporte a reconhecimento de fala
-        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        
-        if (!SpeechRecognition) {
-            alert("Seu navegador não suporta reconhecimento de fala. Use Chrome, Edge ou Safari.");
+        function initSpeechRecognition() {
+            const SpeechRecognitionAPI = window.SpeechRecognition || window.webkitSpeechRecognition;
+            
+            if (!SpeechRecognitionAPI) {
+                showError("Seu navegador não suporta reconhecimento de fala. Use Chrome, Edge ou Safari.");
+                return;
+            }
+            
+            recognition = new SpeechRecognitionAPI();
+            recognition.lang = 'pt-BR';
+            recognition.interimResults = false;
+            recognition.continuous = false;
+
+            micBtn.onclick = () => {
+                try {
+                    recognition.start();
+                    micBtn.classList.add('listening');
+                    hintText.innerText = "Ouvindo... Fale agora";
+                } catch (e) {
+                    console.error("Erro ao iniciar:", e);
+                    hintText.innerText = "Erro no microfone";
+                    micBtn.classList.remove('listening');
+                }
+            };
+
+            recognition.onresult = (event) => {
+                const transcript = event.results[0][0].transcript;
+                translate(transcript);
+            };
+
+            recognition.onend = () => {
+                micBtn.classList.remove('listening');
+            };
+
+            recognition.onerror = (event) => {
+                console.error("Erro no reconhecimento:", event.error);
+                micBtn.classList.remove('listening');
+                hintText.innerText = "Erro ao ouvir. Tente novamente.";
+                
+                if (event.error === 'not-allowed') {
+                    showError("Permissão do microfone negada. Verifique as configurações do seu navegador.");
+                }
+            };
         }
-        
-        const recognition = new SpeechRecognition();
-        recognition.lang = 'pt-BR';
-        recognition.interimResults = false;
-        recognition.continuous = false;
 
         async function translate(text) {
-            if (isKeyMissing) {
-                alert("❌ API key não configurada! Coloque sua chave na variável GROQ_API_KEY.");
-                hintText.innerText = "API key não configurada";
+            if (!GROQ_API_KEY) {
+                showError("API key não configurada. Crie o arquivo config.js");
                 return;
             }
 
@@ -186,8 +242,6 @@
 
                 const data = await response.json();
                 let resultText = data.choices[0].message.content;
-                
-                // Limpa possíveis markdown no retorno
                 resultText = resultText.replace(/```json\n?/g, '').replace(/```\n?/g, '');
                 const result = JSON.parse(resultText);
                 
@@ -195,19 +249,17 @@
             } catch (e) {
                 console.error("Erro:", e);
                 hintText.innerText = "Erro na tradução";
-                alert(`Erro na tradução: ${e.message}\n\nVerifique se a chave API é válida.`);
+                showError(`Erro: ${e.message}`);
             }
         }
 
         function updateUI(data) {
             if (data.lang === 'pt') {
-                // Falou português -> mostra inglês no lado direito
                 textEn.innerText = data.translation;
                 origPt.innerText = data.original;
                 textPt.innerText = data.original;
                 speak(data.translation, 'en-US');
             } else {
-                // Falou inglês -> mostra português no lado esquerdo
                 textPt.innerText = data.translation;
                 origEn.innerText = data.original;
                 textEn.innerText = data.original;
@@ -227,37 +279,6 @@
             utterance.rate = 0.9;
             window.speechSynthesis.speak(utterance);
         }
-
-        micBtn.onclick = () => {
-            try {
-                recognition.start();
-                micBtn.classList.add('listening');
-                hintText.innerText = "Ouvindo... Fale agora";
-            } catch (e) {
-                console.error("Erro ao iniciar:", e);
-                hintText.innerText = "Erro no microfone";
-                micBtn.classList.remove('listening');
-            }
-        };
-
-        recognition.onresult = (event) => {
-            const transcript = event.results[0][0].transcript;
-            translate(transcript);
-        };
-
-        recognition.onend = () => {
-            micBtn.classList.remove('listening');
-        };
-
-        recognition.onerror = (event) => {
-            console.error("Erro no reconhecimento:", event.error);
-            micBtn.classList.remove('listening');
-            hintText.innerText = "Erro ao ouvir. Tente novamente.";
-            
-            if (event.error === 'not-allowed') {
-                alert("Permissão do microfone negada. Verifique as configurações do seu navegador.");
-            }
-        };
 
         window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
     </script>
