@@ -1,0 +1,9 @@
+# Ignorar arquivo de configuração com chaves secretas
+config.js
+
+# Ignorar pastas de sistema
+.DS_Store
+Thumbs.db
+
+# Ignorar logs
+*.log
