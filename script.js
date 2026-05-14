@@ -1,13 +1,13 @@
-// =====================================================
+// =====================================
 // CHAVE API GROQ
-// =====================================================
+// =====================================
 
 const GROQ_API_KEY =
   "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";
 
-// =====================================================
+// =====================================
 // ELEMENTOS
-// =====================================================
+// =====================================
 
 const startBtn =
   document.getElementById("startBtn");
@@ -15,49 +15,35 @@ const startBtn =
 const stopBtn =
   document.getElementById("stopBtn");
 
+const statusDiv =
+  document.getElementById("status");
+
 const originalText =
   document.getElementById("originalText");
 
 const translatedText =
   document.getElementById("translatedText");
 
-const statusText =
-  document.getElementById("statusText");
+const vuBars =
+  document.querySelectorAll(".vu-bar");
 
-const micLed =
-  document.getElementById("micLed");
-
-const liveBadge =
-  document.getElementById("liveBadge");
-
-const bars =
-  document.querySelectorAll(".bar");
-
-// =====================================================
+// =====================================
 // CONTROLE
-// =====================================================
+// =====================================
 
 let recognition;
 
 let listening = false;
 
-let processing = false;
+let speaking = false;
 
-// =====================================================
-// SPEECH RECOGNITION
-// =====================================================
+// =====================================
+// RECONHECIMENTO DE VOZ
+// =====================================
 
 const SpeechRecognition =
   window.SpeechRecognition ||
   window.webkitSpeechRecognition;
-
-if (!SpeechRecognition) {
-
-  alert(
-    "Seu navegador não suporta reconhecimento de voz."
-  );
-
-}
 
 recognition =
   new SpeechRecognition();
@@ -70,9 +56,9 @@ recognition.interimResults = false;
 
 recognition.lang = "pt-BR";
 
-// =====================================================
-// INICIAR
-// =====================================================
+// =====================================
+// INICIAR CONVERSA
+// =====================================
 
 startBtn.addEventListener("click", () => {
 
@@ -82,102 +68,82 @@ startBtn.addEventListener("click", () => {
 
   recognition.start();
 
-  statusText.innerText =
+  statusDiv.innerText =
     "🎤 Ouvindo conversa...";
-
-  micLed.classList.add("mic-active");
-
-  liveBadge.classList.add("live-active");
 
 });
 
-// =====================================================
-// FINALIZAR
-// =====================================================
+// =====================================
+// TERMINAR CONVERSA
+// =====================================
 
 stopBtn.addEventListener("click", () => {
 
   listening = false;
 
-  processing = false;
-
   recognition.stop();
 
   speechSynthesis.cancel();
 
-  statusText.innerText =
-    "⏹ Conversa finalizada";
+  statusDiv.innerText =
+    "⏹ Conversa encerrada";
 
-  micLed.classList.remove("mic-active");
-
-  liveBadge.classList.remove("live-active");
-
-  resetBars();
+  resetVu();
 
 });
 
-// =====================================================
+// =====================================
 // RECEBER FALA
-// =====================================================
+// =====================================
 
 recognition.onresult =
   async (event) => {
 
-    if (processing) return;
-
-    processing = true;
+    if (speaking) return;
 
     const transcript =
       event.results[
         event.results.length - 1
       ][0].transcript.trim();
 
-    if (transcript.length < 2) {
-
-      processing = false;
-
+    if (transcript.length < 2)
       return;
-
-    }
 
     originalText.innerText =
       transcript;
 
-    statusText.innerText =
+    statusDiv.innerText =
       "🌐 Traduzindo...";
 
     try {
 
-      const result =
-        await translateText(transcript);
+      const translated =
+        await translateText(
+          transcript
+        );
 
       translatedText.innerText =
-        result.translation;
+        translated.text;
 
-      statusText.innerText =
-        result.direction;
-
-      speak(
-        result.translation,
-        result.voice
+      speakText(
+        translated.text,
+        translated.lang
       );
 
     } catch (error) {
 
       console.error(error);
 
-      statusText.innerText =
-        "❌ Erro tradução";
-
-      processing = false;
+      statusDiv.innerText =
+        "❌ Erro na tradução";
 
     }
 
 };
 
-// =====================================================
-// TRADUÇÃO
-// =====================================================
+// =====================================
+// TRADUÇÃO GROQ
+// =====================================
 
 async function translateText(text) {
 
@@ -244,8 +210,6 @@ Responda SOMENTE a tradução.
   const data =
     await response.json();
 
-  console.log(data);
-
   const translation =
     data.choices[0]
       .message.content.trim();
@@ -260,14 +224,9 @@ Responda SOMENTE a tradução.
 
   return {
 
-    translation,
+    text: translation,
 
-    direction:
-      isPortuguese
-        ? "PT → EN"
-        : "EN → PT",
-
-    voice:
+    lang:
       isPortuguese
         ? "en-US"
         : "pt-BR"
@@ -276,11 +235,13 @@ Responda SOMENTE a tradução.
 
 }
 
-// =====================================================
-// FALAR ÁUDIO
-// =====================================================
+// =====================================
+// FALAR TEXTO
+// =====================================
 
-function speak(text, lang) {
+function speakText(text, lang) {
+
+  speaking = true;
 
   speechSynthesis.cancel();
 
@@ -299,16 +260,16 @@ function speak(text, lang) {
 
   utterance.onstart = () => {
 
-    statusText.innerText =
+    statusDiv.innerText =
       "🔊 Reproduzindo áudio...";
 
   };
 
   utterance.onend = () => {
 
-    processing = false;
+    speaking = false;
 
-    statusText.innerText =
+    statusDiv.innerText =
       "🎤 Ouvindo conversa...";
 
   };
@@ -319,29 +280,29 @@ function speak(text, lang) {
 
 }
 
-// =====================================================
+// =====================================
 // VU METER
-// =====================================================
+// =====================================
 
-function animateBars() {
+function animateVu() {
 
-  bars.forEach(bar => {
+  vuBars.forEach(bar => {
 
-    const height =
+    const h =
       Math.floor(
-        Math.random() * 150
+        Math.random() * 100
       ) + 20;
 
     bar.style.height =
-      `${height}px`;
+      `${h}px`;
 
   });
 
 }
 
-function resetBars() {
+function resetVu() {
 
-  bars.forEach(bar => {
+  vuBars.forEach(bar => {
 
     bar.style.height =
       "20px";
@@ -350,36 +311,36 @@ function resetBars() {
 
 }
 
-// =====================================================
-// LOOP VISUAL
-// =====================================================
+// =====================================
+// LOOP VU
+// =====================================
 
 setInterval(() => {
 
   if (
     listening &&
-    !processing
+    !speaking
   ) {
 
-    animateBars();
+    animateVu();
 
   } else {
 
-    resetBars();
+    resetVu();
 
   }
 
 }, 120);
 
-// =====================================================
-// AUTO RESTART
-// =====================================================
+// =====================================
+// REINICIAR AUTOMÁTICO
+// =====================================
 
 recognition.onend = () => {
 
   if (
     listening &&
-    !processing
+    !speaking
   ) {
 
     setTimeout(() => {
@@ -392,18 +353,16 @@ recognition.onend = () => {
 
 };
 
-// =====================================================
+// =====================================
 // ERROS
-// =====================================================
+// =====================================
 
 recognition.onerror =
   (event) => {
 
     console.error(event.error);
 
-    statusText.innerText =
+    statusDiv.innerText =
       `❌ ${event.error}`;
-
-    processing = false;
 
 };
