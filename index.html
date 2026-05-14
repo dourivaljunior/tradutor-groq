@@ -109,7 +109,8 @@
 
     <script>
         // ==================================================
-        // SUA CHAVE API GROQ - COLE AQUI DENTRO DAS ASPAS
+        // COLE SUA CHAVE API GROQ AQUI (pode ser a chave de exemplo para testes)
+        // Para usar de verdade: https://console.groq.com
         // ==================================================
         const GROQ_API_KEY = "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";
 
@@ -124,22 +125,20 @@
         const origEn = document.getElementById('orig-en');
 
         // ==================================================
-        // CORREÇÃO: Verificar se a chave NÃO está vazia e NÃO é a string padrão de exemplo
+        // CORREÇÃO FINAL: Só considera inválido se a chave estiver VAZIA
+        // Não bloqueia chave de exemplo - deixa tentar
         // ==================================================
-        const isInvalidKey = !GROQ_API_KEY || 
-                             GROQ_API_KEY === "" || 
-                             GROQ_API_KEY === "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";
+        const isKeyMissing = !GROQ_API_KEY || GROQ_API_KEY === "";
 
-        if (!isInvalidKey) {
+        if (!isKeyMissing) {
             statusDot.classList.add('active');
             statusText.innerText = "GROQ ONLINE";
         } else {
             statusDot.classList.remove('active');
-            statusText.innerText = "⚠️ CONFIGURE A CHAVE";
-            console.warn("API key não configurada corretamente");
+            statusText.innerText = "⚠️ API KEY VAZIA";
         }
 
-        // Verificação de reconhecimento de fala
+        // Verifica suporte a reconhecimento de fala
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         
         if (!SpeechRecognition) {
@@ -152,9 +151,9 @@
         recognition.continuous = false;
 
         async function translate(text) {
-            if (isInvalidKey) {
-                alert("❌ API key inválida! Por favor, obtenha uma chave válida no site da Groq e substitua no código.");
-                hintText.innerText = "API key inválida";
+            if (isKeyMissing) {
+                alert("❌ API key não configurada! Coloque sua chave na variável GROQ_API_KEY.");
+                hintText.innerText = "API key não configurada";
                 return;
             }
 
@@ -176,8 +175,7 @@
                             },
                             {role: "user", content: text}
                         ],
-                        temperature: 0.3,
-                        response_format: { type: "json_object" }
+                        temperature: 0.3
                     })
                 });
 
@@ -187,22 +185,29 @@
                 }
 
                 const data = await response.json();
-                const result = JSON.parse(data.choices[0].message.content);
+                let resultText = data.choices[0].message.content;
+                
+                // Limpa possíveis markdown no retorno
+                resultText = resultText.replace(/```json\n?/g, '').replace(/```\n?/g, '');
+                const result = JSON.parse(resultText);
+                
                 updateUI(result);
             } catch (e) {
-                console.error("Erro detalhado:", e);
+                console.error("Erro:", e);
                 hintText.innerText = "Erro na tradução";
-                alert(`Erro: ${e.message}`);
+                alert(`Erro na tradução: ${e.message}\n\nVerifique se a chave API é válida.`);
             }
         }
 
         function updateUI(data) {
             if (data.lang === 'pt') {
+                // Falou português -> mostra inglês no lado direito
                 textEn.innerText = data.translation;
                 origPt.innerText = data.original;
                 textPt.innerText = data.original;
                 speak(data.translation, 'en-US');
             } else {
+                // Falou inglês -> mostra português no lado esquerdo
                 textPt.innerText = data.translation;
                 origEn.innerText = data.original;
                 textEn.innerText = data.original;
@@ -224,17 +229,12 @@
         }
 
         micBtn.onclick = () => {
-            if (isInvalidKey) {
-                alert("❌ API key inválida! Configure a chave correta no código.");
-                return;
-            }
-            
             try {
                 recognition.start();
                 micBtn.classList.add('listening');
                 hintText.innerText = "Ouvindo... Fale agora";
             } catch (e) {
-                console.error("Erro ao iniciar reconhecimento:", e);
+                console.error("Erro ao iniciar:", e);
                 hintText.innerText = "Erro no microfone";
                 micBtn.classList.remove('listening');
             }
