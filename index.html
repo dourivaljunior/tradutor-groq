@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Tradutor de Painel - Modo Carr v2o</title>
+    <title>Tradutor de Painel - Modo Carro</title>
     <style>
         :root {
             --bg: #0a0a0c;
@@ -20,7 +20,6 @@
             display: flex; flex-direction: column; height: 100vh; overflow: hidden;
         }
 
-        /* Layout de Painel de Carro */
         header {
             padding: 20px; text-align: center; background: var(--card);
             border-bottom: 1px solid rgba(255,255,255,0.1);
@@ -31,7 +30,6 @@
             justify-content: space-around;
         }
 
-        /* Áreas de Tradução */
         .box {
             background: var(--card); border-radius: 24px; padding: 25px;
             min-height: 120px; display: flex; flex-direction: column; justify-content: center;
@@ -45,8 +43,8 @@
         .content { font-size: 24px; font-weight: 600; line-height: 1.2; }
         .original { font-size: 14px; margin-top: 10px; opacity: 0.5; font-style: italic; }
 
-        /* Botão Central Gigante */
         .controls { display: flex; justify-content: center; padding: 30px; }
+        
         #micBtn {
             width: 100px; height: 100px; border-radius: 50%; border: none;
             background: var(--primary); color: white; cursor: pointer;
@@ -59,11 +57,14 @@
             animation: pulse 1.5s infinite;
         }
 
-        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(255, 59, 48, 0.7); } 70% { box-shadow: 0 0 0 20px rgba(255, 59, 48, 0); } 100% { box-shadow: 0 0 0 0 rgba(255, 59, 48, 0); } }
+        @keyframes pulse { 
+            0% { box-shadow: 0 0 0 0 rgba(255, 59, 48, 0.7); } 
+            70% { box-shadow: 0 0 0 20px rgba(255, 59, 48, 0); } 
+            100% { box-shadow: 0 0 0 0 rgba(255, 59, 48, 0); } 
+        }
 
         .hint { text-align: center; font-size: 14px; opacity: 0.6; margin-top: 10px; }
 
-        /* Status de Conexão */
         .status { position: absolute; top: 20px; right: 20px; font-size: 10px; display: flex; align-items: center; gap: 5px; }
         .dot { width: 6px; height: 6px; border-radius: 50%; background: #444; }
         .dot.active { background: #34c759; box-shadow: 0 0 5px #34c759; }
@@ -75,19 +76,17 @@
         <div style="font-weight: 800; letter-spacing: 1px;">TRADUTOR DE PAINEL</div>
         <div class="status">
             <div id="status-dot" class="dot"></div>
-            <span id="status-text">GROQ OFFLINE</span>
+            <span id="status-text">VERIFICANDO...</span>
         </div>
     </header>
 
     <div class="dashboard">
-        <!-- Lado Português (Motorista) -->
         <div class="box box-pt">
             <div class="lang-label">Português (Motorista)</div>
             <div id="text-pt" class="content">...</div>
             <div id="orig-pt" class="original"></div>
         </div>
 
-        <!-- Lado Inglês (Passageiro) -->
         <div class="box box-en">
             <div class="lang-label">English (Passenger)</div>
             <div id="text-en" class="content">...</div>
@@ -98,14 +97,20 @@
     <div class="controls">
         <div style="text-align: center;">
             <button id="micBtn">
-                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" x2="12" y1="19" y2="22"/></svg>
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/>
+                    <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+                    <line x1="12" x2="12" y1="19" y2="22"/>
+                </svg>
             </button>
             <div class="hint" id="hint-text">Toque para ouvir</div>
         </div>
     </div>
 
     <script>
-        // CONFIGURAÇÃO - COLOQUE SUA CHAVE GROQ AQUI
+        // ==================================================
+        // SUA CHAVE API GROQ - COLE AQUI DENTRO DAS ASPAS
+        // ==================================================
         const GROQ_API_KEY = "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";
 
         const micBtn = document.getElementById('micBtn');
@@ -118,25 +123,43 @@
         const origPt = document.getElementById('orig-pt');
         const origEn = document.getElementById('orig-en');
 
-        if (GROQ_API_KEY !== "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") {
+        // ==================================================
+        // CORREÇÃO: Verificar se a chave NÃO está vazia e NÃO é a string padrão de exemplo
+        // ==================================================
+        const isInvalidKey = !GROQ_API_KEY || 
+                             GROQ_API_KEY === "" || 
+                             GROQ_API_KEY === "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";
+
+        if (!isInvalidKey) {
             statusDot.classList.add('active');
             statusText.innerText = "GROQ ONLINE";
+        } else {
+            statusDot.classList.remove('active');
+            statusText.innerText = "⚠️ CONFIGURE A CHAVE";
+            console.warn("API key não configurada corretamente");
         }
 
-        // Reconhecimento de Fala
+        // Verificação de reconhecimento de fala
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        
+        if (!SpeechRecognition) {
+            alert("Seu navegador não suporta reconhecimento de fala. Use Chrome, Edge ou Safari.");
+        }
+        
         const recognition = new SpeechRecognition();
-        recognition.lang = 'pt-BR'; // Começa em PT mas tentará detectar ambos
+        recognition.lang = 'pt-BR';
         recognition.interimResults = false;
         recognition.continuous = false;
 
         async function translate(text) {
-            if (GROQ_API_KEY === "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") {
-                alert("Por favor, configure sua chave Groq no código.");
+            if (isInvalidKey) {
+                alert("❌ API key inválida! Por favor, obtenha uma chave válida no site da Groq e substitua no código.");
+                hintText.innerText = "API key inválida";
                 return;
             }
 
             hintText.innerText = "Traduzindo...";
+            
             try {
                 const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
                     method: "POST",
@@ -145,7 +168,7 @@
                         "Content-Type": "application/json"
                     },
                     body: JSON.stringify({
-                        model: "llama-3.3-70b-versatile",
+                        model: "llama3-70b-8192",
                         messages: [
                             {
                                 role: "system", 
@@ -153,31 +176,39 @@
                             },
                             {role: "user", content: text}
                         ],
+                        temperature: 0.3,
                         response_format: { type: "json_object" }
                     })
                 });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error?.message || `HTTP ${response.status}`);
+                }
 
                 const data = await response.json();
                 const result = JSON.parse(data.choices[0].message.content);
                 updateUI(result);
             } catch (e) {
-                console.error(e);
+                console.error("Erro detalhado:", e);
                 hintText.innerText = "Erro na tradução";
+                alert(`Erro: ${e.message}`);
             }
         }
 
         function updateUI(data) {
-            // Se o original era PT, o destino é EN
             if (data.lang === 'pt') {
                 textEn.innerText = data.translation;
                 origPt.innerText = data.original;
+                textPt.innerText = data.original;
                 speak(data.translation, 'en-US');
             } else {
                 textPt.innerText = data.translation;
                 origEn.innerText = data.original;
+                textEn.innerText = data.original;
                 speak(data.translation, 'pt-BR');
             }
-            hintText.innerText = "Concluído";
+            hintText.innerText = "Concluído ✓";
             setTimeout(() => {
                 if (!micBtn.classList.contains('listening')) {
                     hintText.innerText = "Toque para ouvir novamente";
@@ -188,16 +219,24 @@
         function speak(text, lang) {
             const utterance = new SpeechSynthesisUtterance(text);
             utterance.lang = lang;
+            utterance.rate = 0.9;
             window.speechSynthesis.speak(utterance);
         }
 
         micBtn.onclick = () => {
+            if (isInvalidKey) {
+                alert("❌ API key inválida! Configure a chave correta no código.");
+                return;
+            }
+            
             try {
                 recognition.start();
                 micBtn.classList.add('listening');
-                hintText.innerText = "Ouvindo motorista ou passageiro...";
+                hintText.innerText = "Ouvindo... Fale agora";
             } catch (e) {
-                recognition.stop();
+                console.error("Erro ao iniciar reconhecimento:", e);
+                hintText.innerText = "Erro no microfone";
+                micBtn.classList.remove('listening');
             }
         };
 
@@ -210,12 +249,16 @@
             micBtn.classList.remove('listening');
         };
 
-        recognition.onerror = () => {
+        recognition.onerror = (event) => {
+            console.error("Erro no reconhecimento:", event.error);
             micBtn.classList.remove('listening');
             hintText.innerText = "Erro ao ouvir. Tente novamente.";
+            
+            if (event.error === 'not-allowed') {
+                alert("Permissão do microfone negada. Verifique as configurações do seu navegador.");
+            }
         };
 
-        // Carregar vozes
         window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
     </script>
 </body>
