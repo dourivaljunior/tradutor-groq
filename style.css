@@ -5,7 +5,7 @@
   box-sizing: border-box;
 
 }
- 
+
 body {
 
   font-family: Arial, sans-serif;
@@ -26,12 +26,15 @@ body {
 
 }
 
-.background-glow {
+.bg-glow {
 
   position: fixed;
 
   width: 700px;
   height: 700px;
+
+  top: -200px;
+  right: -200px;
 
   background:
     radial-gradient(
@@ -40,10 +43,7 @@ body {
       transparent
     );
 
-  top: -200px;
-  right: -200px;
-
-  filter: blur(80px);
+  filter: blur(90px);
 
   z-index: 0;
 
@@ -95,7 +95,7 @@ body {
     );
 
   box-shadow:
-    0 0 40px rgba(37,99,235,0.5);
+    0 0 40px rgba(37,99,235,0.45);
 
   margin-bottom: 20px;
 
@@ -159,8 +159,6 @@ body {
   box-shadow:
     0 0 15px #ef4444;
 
-  transition: 0.3s;
-
 }
 
 .mic-active {
@@ -185,9 +183,7 @@ body {
 
   font-weight: bold;
 
-  letter-spacing: 1px;
-
-  opacity: 0.4;
+  opacity: 0.35;
 
 }
 
@@ -222,7 +218,7 @@ body {
 
 .visualizer {
 
-  height: 190px;
+  height: 180px;
 
   display: flex;
 
@@ -250,7 +246,7 @@ body {
       #ef4444
     );
 
-  transition: 0.1s linear;
+  transition: 0.09s linear;
 
 }
 
@@ -357,7 +353,7 @@ button:hover {
 
 }
 
-@media(max-width: 768px) {
+@media(max-width:768px) {
 
   .buttons {
 
